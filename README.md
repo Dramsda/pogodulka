@@ -32,8 +32,27 @@ docker run --rm -p 8080:8080 weather-service
 - Dane udawane, bez internetu: `docker run --rm -p 8080:8080 -e WEATHER_PROVIDER=fake weather-service`.
 - Inny port: `-p 8081:8080` po stronie hosta albo `-e SERVER_PORT=8081 -p 8081:8081`.
 - Kontener liczy „dziś” w strefie `Europe/Warsaw`.
-- Produkcja: `http://172.20.147.21:8082` (port uzgodniony z pozostałymi zespołami). Uruchomienie na serwerze: `docker run -d --name weather --restart unless-stopped -p 8082:8080 weather-service`.
+- Produkcja: `http://172.20.147.21:8082` (port uzgodniony z pozostałymi zespołami).
 - Stan serwisu: `GET /actuator/health`.
+
+## deploy (produkcja)
+
+Na serwerze 172.20.147.21, w katalogu repo:
+
+```bash
+WEATHER_ADMIN_PASSWORD='<hasło>' ./deploy.sh
+```
+
+Skrypt robi `git pull`, buduje obraz (stara wersja dalej działa; czerwone testy przerywają deploy), podmienia kontener i czeka na `/actuator/health`. Przerwa w działaniu: ok. 5 s.
+
+## panel admina (wewnętrzny, poza kontraktem)
+
+`http://172.20.147.21:8082/admin`, login `admin`, hasło z `WEATHER_ADMIN_PASSWORD`. Bez hasła panel jest wyłączony (403).
+
+- pokazuje ostatnie 500 requestów do `/api/**`: czas, metodę, ścieżkę z parametrami, status, czas odpowiedzi, IP klienta (z nazwą zespołu z discovery), błąd, miasto i ikony pogody,
+- odświeża się co 3 s,
+- dane JSON: `GET /admin/api/requests` (najnowsze pierwsze),
+- log zapisuje się do `WEATHER_REQUEST_LOG_FILE` (w Dockerze `/app/data/requests.jsonl` na wolumenie `weather-data`), więc przetrwa deploy. Plik jest przycinany do 500 wpisów po przekroczeniu 5 MB.
 
 ## API
 

@@ -21,8 +21,12 @@ WORKDIR /app
 # "Dziś" w walidacji dat liczymy po polskim czasie, nie UTC.
 ENV TZ=Europe/Warsaw
 
-RUN useradd --system --no-create-home weather
+RUN useradd --system --no-create-home weather \
+    && mkdir /app/data && chown weather /app/data
 USER weather
+
+# Log requestów dla panelu admina. Katalog montujemy jako wolumen (-v weather-data:/app/data), żeby przetrwał deploy.
+ENV WEATHER_REQUEST_LOG_FILE=/app/data/requests.jsonl
 
 COPY --from=build /app/app.jar app.jar
 

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pogodulka · panel</title>
+<style>
+  :root {
+    --bg: #f4f7fb; --card: #ffffff; --text: #1d2939; --muted: #667085; --line: #e4e9f1;
+    --ok: #12b76a; --warn: #f79009; --err: #f04438; --accent: #2e90fa;
+    --sky-a: #ffd36e; --sky-b: #ff9f43; --sky-c: #5eb3ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e1420; --card: #161e2e; --text: #e6ebf3; --muted: #98a2b3; --line: #243049; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+  header {
+    position: relative; overflow: hidden; color: #fff;
+    padding: 28px max(16px, 4vw) 72px;
+    background: linear-gradient(135deg, var(--sky-a), var(--sky-b) 45%, var(--sky-c));
+    transition: background 1s;
+  }
+  header.CLOUDY { --sky-a: #9fb3c8; --sky-b: #7d93ab; --sky-c: #5d7189; }
+  header.RAIN   { --sky-a: #5d7ea8; --sky-b: #3f5f8a; --sky-c: #2c4466; }
+  header.SNOW   { --sky-a: #e3f0ff; --sky-b: #b8d4f5; --sky-c: #8fb4e3; color: #1d2939; }
+  header.STORM  { --sky-a: #4b4f6b; --sky-b: #2f3350; --sky-c: #1b1d33; }
+  header h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+  header p { margin: 4px 0 0; opacity: .9; }
+  .sun {
+    position: absolute; right: 6vw; top: 18px; width: 92px; height: 92px; border-radius: 50%;
+    background: radial-gradient(circle, #fff7c2 0 35%, #ffd84d 36% 60%, transparent 61%);
+    box-shadow: 0 0 60px 20px rgba(255, 220, 90, .55); animation: spin 30s linear infinite;
+  }
+  .sun::before { content: ""; position: absolute; inset: -18px; border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,230,120,.8) 0 6deg, transparent 6deg 30deg);
+    mask: radial-gradient(circle, transparent 0 55%, #000 56%); -webkit-mask: radial-gradient(circle, transparent 0 55%, #000 56%); }
+  header:not(.SUNNY) .sun { opacity: 0; }
+  .drops { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1s; }
+  header.RAIN .drops, header.STORM .drops { opacity: 1; }
+  .drops i { position: absolute; top: -20px; width: 2px; height: 16px; background: rgba(255,255,255,.55); border-radius: 2px; animation: fall linear infinite; }
+  header.STORM { animation: flash 7s infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fall { to { transform: translateY(260px); } }
+  @keyframes flash { 0%, 92%, 96%, 100% { filter: none; } 94% { filter: brightness(1.8); } }
+
+  main { max-width: 1280px; margin: -48px auto 40px; padding-inline: 16px; position: relative; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .stat { background: var(--card); border-radius: 14px; padding: 14px 16px; box-shadow: 0 6px 20px rgba(16,24,40,.08); }
+  .stat b { display: block; font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 20px 0 12px; }
+  .chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 12px; cursor: pointer; font: inherit; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  input[type=search] { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 7px 12px; font: inherit; }
+  label.live { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
+  .paused .dot { background: var(--muted); animation: none; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(18,183,106,.6); } 100% { box-shadow: 0 0 0 10px rgba(18,183,106,0); } }
+
+  .table-wrap { background: var(--card); border-radius: 14px; box-shadow: 0 6px 20px rgba(16,24,40,.06); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  tr.new td { animation: hl 1.5s; }
+  @keyframes hl { from { background: rgba(46,144,250,.15); } }
+  td.path { white-space: normal; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; min-width: 260px; }
+  .err-msg { color: var(--err); font-family: system-ui, sans-serif; font-size: 12px; margin-top: 2px; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-weight: 600; font-size: 12px; }
+  .s2 { background: rgba(18,183,106,.14); color: var(--ok); }
+  .s4 { background: rgba(247,144,9,.15); color: var(--warn); }
+  .s5 { background: rgba(240,68,56,.14); color: var(--err); }
+  .ms { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+  .ms i { display: block; height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
+  .ms i.slow { background: var(--warn); } .ms i.vslow { background: var(--err); }
+  .team { color: var(--muted); font-size: 12px; }
+  .wx { font-size: 18px; letter-spacing: 1px; }
+  .loc { font-weight: 600; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  footer { color: var(--muted); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header id="sky" class="SUNNY">
+  <div class="drops" id="drops"></div>
+  <div class="sun"></div>
+  <h1>☀️ Pogodulka · panel admina</h1>
+  <p id="headline">Ruch na /api/weather na żywo</p>
+</header>
+
+<main>
+  <section class="stats">
+    <div class="stat"><span>Requesty</span><b id="st-total">–</b></div>
+    <div class="stat"><span>Sukces</span><b id="st-ok">–</b></div>
+    <div class="stat"><span>Błędy 4xx / 5xx</span><b id="st-err">–</b></div>
+    <div class="stat"><span>Średni czas</span><b id="st-avg">–</b></div>
+    <div class="stat"><span>Najczęściej pytane</span><b id="st-city">–</b></div>
+    <div class="stat"><span>Klienci</span><b id="st-clients">–</b></div>
+  </section>
+
+  <div class="bar">
+    <button class="chip on" data-f="all">Wszystkie</button>
+    <button class="chip" data-f="2">2xx</button>
+    <button class="chip" data-f="4">4xx</button>
+    <button class="chip" data-f="5">5xx</button>
+    <input type="search" id="q" placeholder="Szukaj: miasto, ścieżka, IP, błąd…">
+    <label class="live" id="live"><span class="dot"></span><input type="checkbox" id="auto" checked> na żywo</label>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Czas</th><th>Status</th><th>Request</th><th>Pogoda</th><th>Czas odp.</th><th>Klient</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>Jeszcze nikt nie pytał o pogodę. 🌤️</div>
+  </div>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+  const ICON = { SUNNY: "☀️", CLOUDY: "☁️", RAIN: "🌧️", SNOW: "❄️", STORM: "⛈️" };
+  const MOOD = { SUNNY: "Słonecznie w zapytaniach", CLOUDY: "Pochmurno w zapytaniach", RAIN: "Pada w zapytaniach",
+                 SNOW: "Śnieżnie w zapytaniach", STORM: "Burzowo w zapytaniach" };
+  // IP z discovery (KONTRAKT_discovery.txt)
+  const TEAMS = { "172.20.147.24": "Atrakcje", "172.20.147.27": "Gastronomia", "172.20.147.17": "Transport",
+                  "172.20.147.21": "Pogoda (my)", "172.20.147.14": "Planer", "172.20.147.20": "Discovery",
+                  "127.0.0.1": "localhost", "0:0:0:0:0:0:0:1": "localhost" };
+
+  let all = [], filter = "all", seen = new Set(), first = true;
+
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const key = r => r.time + r.path + r.clientIp;
+
+  // krople deszczu w nagłówku
+  const drops = document.getElementById("drops");
+  for (let i = 0; i < 40; i++) {
+    const d = document.createElement("i");
+    d.style.left = Math.random() * 100 + "%";
+    d.style.animationDuration = (0.6 + Math.random() * 0.6) + "s";
+    d.style.animationDelay = (Math.random() * 2) + "s";
+    drops.appendChild(d);
+  }
+
+  async function load() {
+    try {
+      // location.origin nie zawiera login:hasło z paska adresu, a fetch odrzuca URL-e z danymi logowania.
+      const res = await fetch(location.origin + "/admin/api/requests", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      all = await res.json();
+      render();
+      document.getElementById("foot").textContent = "Odświeżono " + new Date().toLocaleTimeString("pl-PL") + " · ostatnie " + all.length + " requestów (max 500)";
+    } catch (e) {
+      document.getElementById("foot").textContent = "Nie udało się pobrać danych: " + e.message;
+    }
+  }
+
+  function render() {
+    const q = document.getElementById("q").value.trim().toLowerCase();
+    const rows = all.filter(r => (filter === "all" || String(r.status)[0] === filter)
+      && (!q || [r.path, r.location, r.clientIp, r.error, TEAMS[r.clientIp]].some(v => String(v ?? "").toLowerCase().includes(q))));
+
+    const max = Math.max(1, ...all.map(r => r.durationMs));
+    document.getElementById("rows").innerHTML = rows.map(r => {
+      const s = String(r.status)[0];
+      const w = Math.max(2, Math.round(r.durationMs / max * 120));
+      const speed = r.durationMs > 3000 ? "vslow" : r.durationMs > 1000 ? "slow" : "";
+      const wx = (r.categories || []).map(c => `<span title="${esc(c)}">${ICON[c] || "❔"}</span>`).join("");
+      const isNew = !first && !seen.has(key(r));
+      return `<tr class="${isNew ? "new" : ""}">
+        <td>${esc(new Date(r.time).toLocaleTimeString("pl-PL"))}<div class="team">${esc(new Date(r.time).toLocaleDateString("pl-PL"))}</div></td>
+        <td><span class="pill s${s}">${r.status}</span></td>
+        <td class="path">${esc(r.method)} ${esc(r.path)}${r.error ? `<div class="err-msg">⚠ ${esc(r.error)}</div>` : ""}</td>
+        <td>${r.location ? `<div class="loc">${esc(r.location)}</div>` : ""}<div class="wx">${wx}</div></td>
+        <td><div class="ms"><i class="${speed}" style="width:${w}px"></i>${r.durationMs} ms</div></td>
+        <td>${esc(r.clientIp)}<div class="team">${esc(TEAMS[r.clientIp] || "")}</div></td>
+      </tr>`;
+    }).join("");
+    document.getElementById("empty").hidden = rows.length > 0;
+    all.forEach(r => seen.add(key(r)));
+    first = false;
+    stats();
+  }
+
+  function stats() {
+    const n = all.length;
+    const ok = all.filter(r => r.status < 400).length;
+    const c4 = all.filter(r => r.status >= 400 && r.status < 500).length;
+    const c5 = all.filter(r => r.status >= 500).length;
+    const avg = n ? Math.round(all.reduce((a, r) => a + r.durationMs, 0) / n) : 0;
+    const top = mostCommon(all.map(r => r.location).filter(Boolean));
+    document.getElementById("st-total").textContent = n;
+    document.getElementById("st-ok").textContent = n ? Math.round(ok / n * 100) + "%" : "–";
+    document.getElementById("st-err").textContent = c4 + " / " + c5;
+    document.getElementById("st-avg").textContent = n ? avg + " ms" : "–";
+    document.getElementById("st-city").textContent = top || "–";
+    document.getElementById("st-clients").textContent = new Set(all.map(r => r.clientIp)).size;
+
+    // nastrój nagłówka = najczęstsza pogoda w ostatnich 50 odpowiedziach
+    const mood = mostCommon(all.slice(0, 50).flatMap(r => r.categories || [])) || "SUNNY";
+    document.getElementById("sky").className = mood;
+    document.querySelector("header h1").textContent = ICON[mood] + " Pogodulka · panel admina";
+    document.getElementById("headline").textContent = MOOD[mood] + " · ruch na /api/weather na żywo";
+  }
+
+  function mostCommon(list) {
+    const count = {};
+    let best = null;
+    for (const v of list) {
+      count[v] = (count[v] || 0) + 1;
+      if (!best || count[v] > count[best]) best = v;
+    }
+    return best;
+  }
+
+  document.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".chip").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    filter = b.dataset.f;
+    render();
+  });
+  document.getElementById("q").oninput = render;
+  document.getElementById("auto").onchange = e => document.getElementById("live").classList.toggle("paused", !e.target.checked);
+  setInterval(() => document.getElementById("auto").checked && load(), 3000);
+  load();
+</script>
+</body>
+</html>
