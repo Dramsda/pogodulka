@@ -32,8 +32,10 @@ Zakres dat:
 - daty z przeszłości dają `400`,
 - zakres `/range` ma więc najwyżej 15 dni.
 
-Nie ustaliliśmy jeszcze:
-- **[JUTRO]** port i adres bazowy (do uzgodnienia z pozostałymi zespołami).
+**Adres bazowy:** `http://172.20.147.21:8082`, np.:
+```
+GET http://172.20.147.21:8082/api/weather/day?city=Krak%C3%B3w&date=2026-11-20
+```
 
 **Wzór odpowiedzi:**
 

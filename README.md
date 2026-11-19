@@ -32,6 +32,7 @@ docker run --rm -p 8080:8080 weather-service
 - Dane udawane, bez internetu: `docker run --rm -p 8080:8080 -e WEATHER_PROVIDER=fake weather-service`.
 - Inny port: `-p 8081:8080` po stronie hosta albo `-e SERVER_PORT=8081 -p 8081:8081`.
 - Kontener liczy „dziś” w strefie `Europe/Warsaw`.
+- Produkcja: `http://172.20.147.21:8082` (port uzgodniony z pozostałymi zespołami). Uruchomienie na serwerze: `docker run -d --name weather --restart unless-stopped -p 8082:8080 weather-service`.
 - Stan serwisu: `GET /actuator/health`.
 
 ## API
