@@ -1,0 +1,56 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw:*)",
+      "Bash(./mvnw.cmd:*)",
+      "PowerShell(.\\mvnw.cmd:*)",
+      "Bash(curl -s localhost:*)",
+      "Bash(curl -s -i localhost:*)",
+      "Bash(curl -s http://localhost:*)",
+      "Bash(curl -s -i http://localhost:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker build:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "ask": [
+      "Edit(/src/test/**)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-tests-on-stop.sh\"",
+            "timeout": 600,
+            "statusMessage": "Uruchamiam testy..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-test-edits.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
