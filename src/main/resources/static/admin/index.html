@@ -6,223 +6,515 @@
 <title>Pogodulka · panel</title>
 <style>
   :root {
-    --bg: #f4f7fb; --card: #ffffff; --text: #1d2939; --muted: #667085; --line: #e4e9f1;
-    --ok: #12b76a; --warn: #f79009; --err: #f04438; --accent: #2e90fa;
-    --sky-a: #ffd36e; --sky-b: #ff9f43; --sky-c: #5eb3ff;
+    --bg: #eef2f8; --card: #ffffff; --card-2: #f6f8fc; --text: #0f172a; --muted: #64748b; --line: #e2e8f0;
+    --ok: #10b981; --warn: #f59e0b; --err: #ef4444; --accent: #3b82f6;
+    --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+    --sky-a: #ffcf5c; --sky-b: #ff8f3f; --sky-c: #4aa8ff;
+    --radius: 18px;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0e1420; --card: #161e2e; --text: #e6ebf3; --muted: #98a2b3; --line: #243049; }
+    :root { --bg: #0b1120; --card: #131c2e; --card-2: #0f1727; --text: #e5edf7; --muted: #8a9ab3; --line: #1f2b40;
+            --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  body { margin: 0; font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  b { font-weight: 650; }
+  .muted { color: var(--muted); }
 
+  /* ---------- niebo ---------- */
   header {
     position: relative; overflow: hidden; color: #fff;
-    padding: 28px max(16px, 4vw) 72px;
-    background: linear-gradient(135deg, var(--sky-a), var(--sky-b) 45%, var(--sky-c));
-    transition: background 1s;
+    padding: 32px max(16px, 5vw) 96px;
+    background: linear-gradient(135deg, var(--sky-a), var(--sky-b) 50%, var(--sky-c));
   }
-  header.CLOUDY { --sky-a: #9fb3c8; --sky-b: #7d93ab; --sky-c: #5d7189; }
-  header.RAIN   { --sky-a: #5d7ea8; --sky-b: #3f5f8a; --sky-c: #2c4466; }
-  header.SNOW   { --sky-a: #e3f0ff; --sky-b: #b8d4f5; --sky-c: #8fb4e3; color: #1d2939; }
-  header.STORM  { --sky-a: #4b4f6b; --sky-b: #2f3350; --sky-c: #1b1d33; }
-  header h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
-  header p { margin: 4px 0 0; opacity: .9; }
-  .sun {
-    position: absolute; right: 6vw; top: 18px; width: 92px; height: 92px; border-radius: 50%;
-    background: radial-gradient(circle, #fff7c2 0 35%, #ffd84d 36% 60%, transparent 61%);
-    box-shadow: 0 0 60px 20px rgba(255, 220, 90, .55); animation: spin 30s linear infinite;
-  }
-  .sun::before { content: ""; position: absolute; inset: -18px; border-radius: 50%;
-    background: repeating-conic-gradient(rgba(255,230,120,.8) 0 6deg, transparent 6deg 30deg);
-    mask: radial-gradient(circle, transparent 0 55%, #000 56%); -webkit-mask: radial-gradient(circle, transparent 0 55%, #000 56%); }
+  header.CLOUDY { --sky-a: #a7b8cc; --sky-b: #7f94ad; --sky-c: #5b6f88; }
+  header.RAIN   { --sky-a: #6c8fbd; --sky-b: #46689a; --sky-c: #2a4470; }
+  header.SNOW   { --sky-a: #eef6ff; --sky-b: #c3dbf7; --sky-c: #93b7e6; color: #10223d; }
+  header.STORM  { --sky-a: #545a7d; --sky-b: #33385a; --sky-c: #1a1d36; animation: flash 8s infinite; }
+  @keyframes flash { 0%, 90%, 94%, 100% { filter: none; } 92% { filter: brightness(1.9); } }
+  .hero { position: relative; z-index: 2; max-width: 1320px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; opacity: .95; }
+  .live { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-weight: 500; font-size: 13px;
+          background: rgba(255,255,255,.18); padding: 5px 12px 5px 10px; border-radius: 999px; cursor: pointer; user-select: none; backdrop-filter: blur(6px); }
+  .live .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+  .live.paused .dot { background: #cbd5e1; animation: none; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,.7); } 100% { box-shadow: 0 0 0 10px rgba(74,222,128,0); } }
+  h1 { margin: 22px 0 6px; font-size: clamp(26px, 4vw, 40px); line-height: 1.1; letter-spacing: -.025em; font-weight: 750; }
+  .sub { font-size: 16px; opacity: .92; max-width: 760px; }
+
+  .sun { position: absolute; right: 8vw; top: 26px; width: 110px; height: 110px; border-radius: 50%; z-index: 1;
+         background: radial-gradient(circle, #fffbe0 0 30%, #ffe066 31% 58%, transparent 60%);
+         box-shadow: 0 0 80px 30px rgba(255,214,90,.5); transition: opacity 1s; }
+  .sun::before { content: ""; position: absolute; inset: -22px; border-radius: 50%; animation: spin 40s linear infinite;
+         background: repeating-conic-gradient(rgba(255,236,140,.85) 0 5deg, transparent 5deg 30deg);
+         -webkit-mask: radial-gradient(circle, transparent 0 56%, #000 57%); mask: radial-gradient(circle, transparent 0 56%, #000 57%); }
   header:not(.SUNNY) .sun { opacity: 0; }
-  .drops { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1s; }
-  header.RAIN .drops, header.STORM .drops { opacity: 1; }
-  .drops i { position: absolute; top: -20px; width: 2px; height: 16px; background: rgba(255,255,255,.55); border-radius: 2px; animation: fall linear infinite; }
-  header.STORM { animation: flash 7s infinite; }
+  .cloud { position: absolute; z-index: 1; width: 180px; height: 60px; background: rgba(255,255,255,.55); border-radius: 60px; opacity: 0; transition: opacity 1s;
+           animation: drift 60s linear infinite; }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: inherit; border-radius: 50%; }
+  .cloud::before { width: 80px; height: 80px; top: -40px; left: 30px; }
+  .cloud::after { width: 100px; height: 100px; top: -55px; left: 70px; }
+  header.CLOUDY .cloud, header.RAIN .cloud, header.STORM .cloud, header.SNOW .cloud { opacity: .8; }
+  header.RAIN .cloud, header.STORM .cloud { background: rgba(220,230,245,.35); }
+  @keyframes drift { from { transform: translateX(-30vw); } to { transform: translateX(110vw); } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fall { to { transform: translateY(260px); } }
-  @keyframes flash { 0%, 92%, 96%, 100% { filter: none; } 94% { filter: brightness(1.8); } }
+  .fx { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 1s; }
+  header.RAIN .rain, header.STORM .rain, header.SNOW .snow { opacity: 1; }
+  .rain i { position: absolute; top: -20px; width: 1.5px; height: 18px; background: rgba(255,255,255,.6); border-radius: 2px; animation: fall linear infinite; }
+  .snow i { position: absolute; top: -10px; width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: fall linear infinite; opacity: .9; }
+  @keyframes fall { to { transform: translateY(320px); } }
 
-  main { max-width: 1280px; margin: -48px auto 40px; padding-inline: 16px; position: relative; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-  .stat { background: var(--card); border-radius: 14px; padding: 14px 16px; box-shadow: 0 6px 20px rgba(16,24,40,.08); }
-  .stat b { display: block; font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  /* ---------- układ ---------- */
+  main { max-width: 1320px; margin: -64px auto 48px; padding-inline: 16px; position: relative; z-index: 3;
+         display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  @media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } }
+  main > * { min-width: 0; }
+  @media (max-width: 520px) { .sun { width: 70px; height: 70px; right: 16px; } .line1 { flex-direction: column; gap: 2px; } }
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }
 
-  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 20px 0 12px; }
-  .chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 12px; cursor: pointer; font: inherit; }
-  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-  input[type=search] { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 7px 12px; font: inherit; }
-  label.live { display: flex; gap: 6px; align-items: center; color: var(--muted); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
-  .paused .dot { background: var(--muted); animation: none; }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(18,183,106,.6); } 100% { box-shadow: 0 0 0 10px rgba(18,183,106,0); } }
+  /* ---------- filtry ---------- */
+  .toolbar { padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { border: 1px solid var(--line); background: var(--card-2); color: var(--text); border-radius: 999px; padding: 6px 12px;
+          cursor: pointer; font: inherit; display: inline-flex; gap: 6px; align-items: center; transition: .15s; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--text); color: var(--card); border-color: var(--text); }
+  .chip .n { font-size: 11px; opacity: .7; }
+  .search { flex: 1 1 200px; min-width: 0; border: 1px solid var(--line); background: var(--card-2); color: var(--text);
+            border-radius: 999px; padding: 7px 14px; font: inherit; outline: none; }
+  .search:focus { border-color: var(--accent); }
 
-  .table-wrap { background: var(--card); border-radius: 14px; box-shadow: 0 6px 20px rgba(16,24,40,.06); overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
-  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
-  tr.new td { animation: hl 1.5s; }
-  @keyframes hl { from { background: rgba(46,144,250,.15); } }
-  td.path { white-space: normal; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; min-width: 260px; }
-  .err-msg { color: var(--err); font-family: system-ui, sans-serif; font-size: 12px; margin-top: 2px; }
-  .pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-weight: 600; font-size: 12px; }
-  .s2 { background: rgba(18,183,106,.14); color: var(--ok); }
-  .s4 { background: rgba(247,144,9,.15); color: var(--warn); }
-  .s5 { background: rgba(240,68,56,.14); color: var(--err); }
-  .ms { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
-  .ms i { display: block; height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
-  .ms i.slow { background: var(--warn); } .ms i.vslow { background: var(--err); }
-  .team { color: var(--muted); font-size: 12px; }
-  .wx { font-size: 18px; letter-spacing: 1px; }
-  .loc { font-weight: 600; }
-  .empty { padding: 40px; text-align: center; color: var(--muted); }
-  footer { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  /* ---------- oś czasu ---------- */
+  .feed { margin-top: 16px; }
+  .day-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 6px 10px; }
+  .event { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 16px 18px; margin-bottom: 10px; position: relative; }
+  .event.fresh { animation: slide .5s ease-out; }
+  @keyframes slide { from { opacity: 0; transform: translateY(-8px); box-shadow: 0 0 0 3px rgba(59,130,246,.35); } }
+  .avatar { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; color: #fff; }
+  .line1 { display: flex; gap: 10px; align-items: baseline; }
+  .sentence { font-size: 15px; flex: 1; min-width: 0; }
+  .when { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .place { display: inline-flex; align-items: center; gap: 3px; background: var(--card-2); border: 1px solid var(--line); padding: 0 8px; border-radius: 8px; font-weight: 600; white-space: nowrap; }
+
+  .forecast { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+  .fday { flex: 0 0 auto; min-width: 74px; text-align: center; border-radius: 12px; padding: 8px 6px; background: var(--card-2); border: 1px solid var(--line); }
+  .fday .ico { font-size: 24px; line-height: 1.2; }
+  .fday .d { font-size: 11px; color: var(--muted); text-transform: capitalize; }
+  .fday .t { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .fday .t .max { font-weight: 700; }
+  .fday.SUNNY { background: linear-gradient(180deg, rgba(255,207,92,.25), transparent); }
+  .fday.RAIN  { background: linear-gradient(180deg, rgba(70,104,154,.2), transparent); }
+  .fday.SNOW  { background: linear-gradient(180deg, rgba(147,183,230,.25), transparent); }
+  .fday.STORM { background: linear-gradient(180deg, rgba(84,90,125,.3), transparent); }
+  .fday.CLOUDY { background: linear-gradient(180deg, rgba(127,148,173,.2), transparent); }
+  .single { display: inline-flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 14px 8px 10px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--line); }
+  .single .ico { font-size: 30px; }
+  .single .lbl { font-weight: 650; }
+
+  .callout { margin-top: 10px; padding: 8px 12px; border-radius: 12px; font-size: 13px; display: flex; gap: 8px; }
+  .callout.c4 { background: rgba(245,158,11,.12); color: #b45309; }
+  .callout.c5 { background: rgba(239,68,68,.12); color: #b91c1c; }
+  @media (prefers-color-scheme: dark) { .callout.c4 { color: #fbbf24; } .callout.c5 { color: #fca5a5; } }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .b2 { color: var(--ok); } .b4 { color: var(--warn); } .b5 { color: var(--err); }
+  details { font-size: 12px; }
+  details summary { cursor: pointer; color: var(--muted); list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: " ▾"; }
+  details[open] summary::after { content: " ▴"; }
+  .raw { margin-top: 8px; padding: 10px 12px; background: var(--card-2); border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+         word-break: break-all; color: var(--text); line-height: 1.7; }
+  .more { display: block; margin: 8px auto 0; }
+  .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
+  .empty .big { font-size: 48px; }
+
+  /* ---------- panel boczny ---------- */
+  aside { display: grid; gap: 16px; }
+  aside .card { padding: 18px; }
+  aside h3 { margin: 0 0 14px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .health { display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center; }
+  .ring { position: relative; width: 96px; height: 96px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .v { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-size: 22px; font-weight: 750; line-height: 1; }
+  .ring .v small { display: block; font-size: 10px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+  .kv { display: grid; gap: 8px; font-size: 13px; }
+  .kv div { display: flex; justify-content: space-between; gap: 8px; }
+  .kv span:last-child { font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; }
+  .who { display: grid; gap: 12px; }
+  .who-row { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; }
+  .who-row .avatar { width: 32px; height: 32px; border-radius: 10px; font-size: 16px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--card-2); margin-top: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 3px; }
+  .places { display: grid; gap: 8px; }
+  .places div { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--card-2); }
+  .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--card-2); }
+  .stack i { display: block; height: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  footer { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
+
 <header id="sky" class="SUNNY">
-  <div class="drops" id="drops"></div>
   <div class="sun"></div>
-  <h1>☀️ Pogodulka · panel admina</h1>
-  <p id="headline">Ruch na /api/weather na żywo</p>
+  <div class="cloud" style="top: 30px; animation-duration: 70s;"></div>
+  <div class="cloud" style="top: 110px; animation-duration: 95s; animation-delay: -40s; transform: scale(.7);"></div>
+  <div class="fx rain" id="rain"></div>
+  <div class="fx snow" id="snow"></div>
+  <div class="hero">
+    <div class="brand">⛅ Pogodulka <span class="muted" style="color: inherit; opacity: .7; font-weight: 500;">· panel</span>
+      <span class="live" id="live" title="Wstrzymaj / wznów odświeżanie"><span class="dot"></span><span id="live-txt">na żywo</span></span>
+    </div>
+    <h1 id="greeting">Dzień dobry 👋</h1>
+    <div class="sub" id="summary">Ładuję ruch na serwisie pogody…</div>
+  </div>
 </header>
 
 <main>
-  <section class="stats">
-    <div class="stat"><span>Requesty</span><b id="st-total">–</b></div>
-    <div class="stat"><span>Sukces</span><b id="st-ok">–</b></div>
-    <div class="stat"><span>Błędy 4xx / 5xx</span><b id="st-err">–</b></div>
-    <div class="stat"><span>Średni czas</span><b id="st-avg">–</b></div>
-    <div class="stat"><span>Najczęściej pytane</span><b id="st-city">–</b></div>
-    <div class="stat"><span>Klienci</span><b id="st-clients">–</b></div>
+  <section>
+    <div class="card toolbar" id="toolbar">
+      <div id="team-chips" style="display: contents;"></div>
+      <button class="chip" id="only-problems">⚠️ Tylko problemy</button>
+      <input class="search" id="q" type="search" placeholder="Szukaj miasta, zespołu, błędu…">
+    </div>
+    <div class="feed" id="feed"></div>
+    <button class="chip more" id="more" hidden>Pokaż starsze</button>
   </section>
 
-  <div class="bar">
-    <button class="chip on" data-f="all">Wszystkie</button>
-    <button class="chip" data-f="2">2xx</button>
-    <button class="chip" data-f="4">4xx</button>
-    <button class="chip" data-f="5">5xx</button>
-    <input type="search" id="q" placeholder="Szukaj: miasto, ścieżka, IP, błąd…">
-    <label class="live" id="live"><span class="dot"></span><input type="checkbox" id="auto" checked> na żywo</label>
-  </div>
+  <aside>
+    <div class="card">
+      <h3>Kondycja serwisu</h3>
+      <div class="health">
+        <div class="ring" id="ring"></div>
+        <div class="kv" id="health"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Kto pyta</h3>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="card">
+      <h3>Popularne miejsca</h3>
+      <div class="places" id="places"></div>
+    </div>
+    <div class="card">
+      <h3>Pogoda w odpowiedziach</h3>
+      <div class="stack" id="stack"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </aside>
 
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Czas</th><th>Status</th><th>Request</th><th>Pogoda</th><th>Czas odp.</th><th>Klient</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <div class="empty" id="empty" hidden>Jeszcze nikt nie pytał o pogodę. 🌤️</div>
-  </div>
   <footer id="foot"></footer>
 </main>
 
 <script>
-  const ICON = { SUNNY: "☀️", CLOUDY: "☁️", RAIN: "🌧️", SNOW: "❄️", STORM: "⛈️" };
-  const MOOD = { SUNNY: "Słonecznie w zapytaniach", CLOUDY: "Pochmurno w zapytaniach", RAIN: "Pada w zapytaniach",
-                 SNOW: "Śnieżnie w zapytaniach", STORM: "Burzowo w zapytaniach" };
-  // IP z discovery (KONTRAKT_discovery.txt)
-  const TEAMS = { "172.20.147.24": "Atrakcje", "172.20.147.27": "Gastronomia", "172.20.147.17": "Transport",
-                  "172.20.147.21": "Pogoda (my)", "172.20.147.14": "Planer", "172.20.147.20": "Discovery",
-                  "127.0.0.1": "localhost", "0:0:0:0:0:0:0:1": "localhost" };
+  // ---------- słowniki ----------
+  const WX = {
+    SUNNY:  { icon: "☀️", label: "Słonecznie", color: "#fbbf24" },
+    CLOUDY: { icon: "☁️", label: "Pochmurno",  color: "#94a3b8" },
+    RAIN:   { icon: "🌧️", label: "Deszczowo",  color: "#3b82f6" },
+    SNOW:   { icon: "❄️", label: "Śnieg",      color: "#93c5fd" },
+    STORM:  { icon: "⛈️", label: "Burza",      color: "#6366f1" },
+  };
+  // IP zespołów z discovery (KONTRAKT_discovery.txt). verb: forma czasownika pasująca do nazwy.
+  const TEAMS = {
+    "172.20.147.24": { name: "Atrakcje",    verb: "zapytały", searched: "szukały", got: "dostały", emoji: "🎡", color: "#f97316" },
+    "172.20.147.27": { name: "Gastronomia", verb: "zapytała", searched: "szukała", got: "dostała", emoji: "🍽️", color: "#ec4899" },
+    "172.20.147.17": { name: "Transport",   verb: "zapytał",  searched: "szukał",  got: "dostał",  emoji: "🚌", color: "#0ea5e9" },
+    "172.20.147.14": { name: "Planer",      verb: "zapytał",  searched: "szukał",  got: "dostał",  emoji: "🗺️", color: "#8b5cf6" },
+    "172.20.147.20": { name: "Discovery",   verb: "zapytało", searched: "szukało", got: "dostało", emoji: "🧭", color: "#64748b" },
+    "172.20.147.21": { name: "My (serwer)", verb: "zapytaliśmy", searched: "szukaliśmy", got: "dostaliśmy", emoji: "⛅", color: "#eab308" },
+  };
+  const LOCAL = { name: "Test lokalny", verb: "zapytał", searched: "szukał", got: "dostał", emoji: "🧪", color: "#14b8a6" };
+  ["127.0.0.1", "0:0:0:0:0:0:0:1", "172.17.0.1"].forEach(ip => TEAMS[ip] = LOCAL);
+  const PALETTE = ["#22c55e", "#f43f5e", "#a855f7", "#06b6d4", "#84cc16", "#e11d48"];
 
-  let all = [], filter = "all", seen = new Set(), first = true;
-
-  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const key = r => r.time + r.path + r.clientIp;
-
-  // krople deszczu w nagłówku
-  const drops = document.getElementById("drops");
-  for (let i = 0; i < 40; i++) {
-    const d = document.createElement("i");
-    d.style.left = Math.random() * 100 + "%";
-    d.style.animationDuration = (0.6 + Math.random() * 0.6) + "s";
-    d.style.animationDelay = (Math.random() * 2) + "s";
-    drops.appendChild(d);
+  function team(ip) {
+    if (TEAMS[ip]) return TEAMS[ip];
+    const h = [...ip].reduce((a, c) => a * 31 + c.charCodeAt(0) | 0, 0);
+    return { name: "Nieznany klient", verb: "zapytał", searched: "szukał", got: "dostał", emoji: "👤",
+             color: PALETTE[Math.abs(h) % PALETTE.length], unknown: true };
   }
+
+  // ---------- pomocnicze ----------
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const keyOf = r => r.time + "|" + r.path + "|" + r.clientIp;
+  const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const parseDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+  const short = d => d.toLocaleDateString("pl-PL", { weekday: "short", day: "numeric", month: "short" });
+
+  // Zwraca frazę razem z przyimkiem: „na jutro”, „za 3 dni”, „sprzed 2 dni”.
+  function relDay(s) {
+    const diff = Math.round((parseDate(s) - startOfDay(new Date())) / 864e5);
+    const names = { "-1": "na wczoraj", "0": "na dziś", "1": "na jutro", "2": "na pojutrze" };
+    return names[diff] ?? (diff > 0 ? `za ${diff} dni` : `sprzed ${-diff} dni`);
+  }
+  function ago(t) {
+    const s = Math.max(0, Math.round((Date.now() - new Date(t)) / 1000));
+    if (s < 10) return "przed chwilą";
+    if (s < 60) return `${s} s temu`;
+    if (s < 3600) return `${Math.floor(s / 60)} min temu`;
+    if (s < 86400) return new Date(t).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    return new Date(t).toLocaleString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function dayGroup(t) {
+    const diff = Math.round((startOfDay(new Date()) - startOfDay(t)) / 864e5);
+    return diff === 0 ? "Dziś" : diff === 1 ? "Wczoraj" : new Date(t).toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "long" });
+  }
+  function params(r) {
+    try { return new URL(r.path, location.origin).searchParams; } catch { return new URLSearchParams(); }
+  }
+  function placeOf(r, p) {
+    if (r.location) return r.location;
+    if (p.get("city")) return p.get("city");
+    if (p.get("lat") || p.get("lon")) return `${p.get("lat") ?? "?"}, ${p.get("lon") ?? "?"}`;
+    return null;
+  }
+  const deg = v => `${Math.round(v)}°`;
+
+  // ---------- zdanie „kto, co, kiedy” ----------
+  function describe(r) {
+    const tm = team(r.clientIp);
+    const p = params(r);
+    const isRange = r.path.includes("/range");
+    const place = placeOf(r, p);
+    const placeHtml = place ? `<span class="place">📍 ${esc(place)}</span>` : `<span class="muted">(bez miejsca)</span>`;
+    let when = "";
+    if (isRange && isDate(p.get("from")) && isDate(p.get("to"))) {
+      const n = Math.round((parseDate(p.get("to")) - parseDate(p.get("from"))) / 864e5) + 1;
+      when = n > 0
+        ? `na <b>${n} ${n === 1 ? "dzień" : "dni"}</b> <span class="muted">(${short(parseDate(p.get("from")))} – ${short(parseDate(p.get("to")))})</span>`
+        : `na zakres <b>${esc(p.get("from"))} → ${esc(p.get("to"))}</b>`;
+    } else if (isDate(p.get("date"))) {
+      when = `<b>${relDay(p.get("date"))}</b> <span class="muted">(${short(parseDate(p.get("date")))})</span>`;
+    } else if (p.get("date")) {
+      when = `na <b>${esc(p.get("date"))}</b>`;
+    }
+    const who = `<b style="color:${tm.color}">${esc(tm.name)}</b>`;
+
+    if (r.status === 404) return `${who} ${tm.searched} miejsca ${placeHtml}, ale nie ma go na mapie 🗺️`;
+    if (r.status >= 500) return `${who} ${tm.verb} o pogodę ${placeHtml} ${when}, ale nie ${tm.got} odpowiedzi`;
+    if (r.status >= 400) return `${who} ${tm.verb} o pogodę ${placeHtml} ${when}, ale zapytanie było błędne`;
+    return `${who} ${tm.verb} o pogodę ${placeHtml} ${when}`;
+  }
+
+  function weather(r) {
+    const days = r.days || (r.categories || []).map(c => ({ category: c }));
+    if (!days.length) return "";
+    if (days.length === 1) {
+      const d = days[0], w = WX[d.category] || { icon: "❔", label: d.category };
+      const t = d.tempMin != null ? ` · ${deg(d.tempMin)} – ${deg(d.tempMax)}` : "";
+      return `<div class="single"><span class="ico">${w.icon}</span><span><span class="lbl">${esc(w.label)}</span><span class="muted">${t}</span></span></div>`;
+    }
+    return `<div class="forecast">${days.map(d => {
+      const w = WX[d.category] || { icon: "❔", label: d.category };
+      const day = d.date ? parseDate(d.date).toLocaleDateString("pl-PL", { weekday: "short", day: "numeric" }) : "";
+      const t = d.tempMin != null ? `<div class="t"><span class="max">${deg(d.tempMax)}</span> <span class="muted">${deg(d.tempMin)}</span></div>` : "";
+      return `<div class="fday ${esc(d.category)}" title="${esc(w.label)}"><div class="d">${esc(day)}</div><div class="ico">${w.icon}</div>${t}</div>`;
+    }).join("")}</div>`;
+  }
+
+  function callout(r) {
+    if (r.status < 400) return "";
+    const cls = r.status >= 500 ? "c5" : "c4";
+    const text = r.status >= 500 ? "Open-Meteo nie odpowiedziało, klient dostał 503 i ma spróbować za minutę."
+               : r.status === 404 ? "Nie znaleźliśmy takiego miasta (404)."
+               : `Odrzuciliśmy zapytanie (400): ${esc(r.error)}`;
+    return `<div class="callout ${cls}"><span>${r.status >= 500 ? "⛔" : "⚠️"}</span><span>${text}</span></div>`;
+  }
+
+  // ---------- stan ----------
+  let all = [], seen = new Set(), firstLoad = true, teamFilter = null, onlyProblems = false, limit = 60, paused = false;
+  const openDetails = new Set();
+  let lastSig = "";
 
   async function load() {
     try {
-      // location.origin nie zawiera login:hasło z paska adresu, a fetch odrzuca URL-e z danymi logowania.
+      // location.origin pomija login:hasło z paska adresu (fetch odrzuca URL-e z danymi logowania).
       const res = await fetch(location.origin + "/admin/api/requests", { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       all = await res.json();
       render();
-      document.getElementById("foot").textContent = "Odświeżono " + new Date().toLocaleTimeString("pl-PL") + " · ostatnie " + all.length + " requestów (max 500)";
+      $("foot").textContent = `Ostatnia aktualizacja ${new Date().toLocaleTimeString("pl-PL")} · w pamięci ${all.length} z 500 ostatnich zapytań`;
     } catch (e) {
-      document.getElementById("foot").textContent = "Nie udało się pobrać danych: " + e.message;
+      $("foot").textContent = "Nie udało się pobrać danych: " + e.message;
     }
+  }
+
+  function filtered() {
+    const q = $("q").value.trim().toLowerCase();
+    return all.filter(r => {
+      if (teamFilter && team(r.clientIp).name !== teamFilter) return false;
+      if (onlyProblems && r.status < 400) return false;
+      if (!q) return true;
+      const p = params(r);
+      return [r.path, r.location, r.clientIp, r.error, team(r.clientIp).name, p.get("city")]
+        .some(v => String(v ?? "").toLowerCase().includes(q));
+    });
   }
 
   function render() {
-    const q = document.getElementById("q").value.trim().toLowerCase();
-    const rows = all.filter(r => (filter === "all" || String(r.status)[0] === filter)
-      && (!q || [r.path, r.location, r.clientIp, r.error, TEAMS[r.clientIp]].some(v => String(v ?? "").toLowerCase().includes(q))));
+    renderFeed();
+    renderChips();
+    renderSide();
+    renderHero();
+    all.forEach(r => seen.add(keyOf(r)));
+    firstLoad = false;
+  }
 
-    const max = Math.max(1, ...all.map(r => r.durationMs));
-    document.getElementById("rows").innerHTML = rows.map(r => {
+  function renderFeed() {
+    const rows = filtered();
+    const shown = rows.slice(0, limit);
+    let html = "", group = null;
+    for (const r of shown) {
+      const g = dayGroup(r.time);
+      if (g !== group) { html += `<div class="day-label">${esc(g)}</div>`; group = g; }
+      const tm = team(r.clientIp);
+      const k = keyOf(r);
+      const fresh = !firstLoad && !seen.has(k);
       const s = String(r.status)[0];
-      const w = Math.max(2, Math.round(r.durationMs / max * 120));
-      const speed = r.durationMs > 3000 ? "vslow" : r.durationMs > 1000 ? "slow" : "";
-      const wx = (r.categories || []).map(c => `<span title="${esc(c)}">${ICON[c] || "❔"}</span>`).join("");
-      const isNew = !first && !seen.has(key(r));
-      return `<tr class="${isNew ? "new" : ""}">
-        <td>${esc(new Date(r.time).toLocaleTimeString("pl-PL"))}<div class="team">${esc(new Date(r.time).toLocaleDateString("pl-PL"))}</div></td>
-        <td><span class="pill s${s}">${r.status}</span></td>
-        <td class="path">${esc(r.method)} ${esc(r.path)}${r.error ? `<div class="err-msg">⚠ ${esc(r.error)}</div>` : ""}</td>
-        <td>${r.location ? `<div class="loc">${esc(r.location)}</div>` : ""}<div class="wx">${wx}</div></td>
-        <td><div class="ms"><i class="${speed}" style="width:${w}px"></i>${r.durationMs} ms</div></td>
-        <td>${esc(r.clientIp)}<div class="team">${esc(TEAMS[r.clientIp] || "")}</div></td>
-      </tr>`;
-    }).join("");
-    document.getElementById("empty").hidden = rows.length > 0;
-    all.forEach(r => seen.add(key(r)));
-    first = false;
-    stats();
-  }
-
-  function stats() {
-    const n = all.length;
-    const ok = all.filter(r => r.status < 400).length;
-    const c4 = all.filter(r => r.status >= 400 && r.status < 500).length;
-    const c5 = all.filter(r => r.status >= 500).length;
-    const avg = n ? Math.round(all.reduce((a, r) => a + r.durationMs, 0) / n) : 0;
-    const top = mostCommon(all.map(r => r.location).filter(Boolean));
-    document.getElementById("st-total").textContent = n;
-    document.getElementById("st-ok").textContent = n ? Math.round(ok / n * 100) + "%" : "–";
-    document.getElementById("st-err").textContent = c4 + " / " + c5;
-    document.getElementById("st-avg").textContent = n ? avg + " ms" : "–";
-    document.getElementById("st-city").textContent = top || "–";
-    document.getElementById("st-clients").textContent = new Set(all.map(r => r.clientIp)).size;
-
-    // nastrój nagłówka = najczęstsza pogoda w ostatnich 50 odpowiedziach
-    const mood = mostCommon(all.slice(0, 50).flatMap(r => r.categories || [])) || "SUNNY";
-    document.getElementById("sky").className = mood;
-    document.querySelector("header h1").textContent = ICON[mood] + " Pogodulka · panel admina";
-    document.getElementById("headline").textContent = MOOD[mood] + " · ruch na /api/weather na żywo";
-  }
-
-  function mostCommon(list) {
-    const count = {};
-    let best = null;
-    for (const v of list) {
-      count[v] = (count[v] || 0) + 1;
-      if (!best || count[v] > count[best]) best = v;
+      html += `<article class="card event ${fresh ? "fresh" : ""}">
+        <div class="avatar" style="background:${tm.color}">${tm.emoji}</div>
+        <div>
+          <div class="line1"><div class="sentence">${describe(r)}</div>
+            <time class="when" title="${esc(new Date(r.time).toLocaleString("pl-PL"))}">${ago(r.time)}</time></div>
+          ${weather(r)}
+          ${callout(r)}
+          <div class="meta">
+            <span class="badge b${s}">${r.status < 400 ? "OK" : "Błąd"} ${r.status}</span>
+            <span>⏱ ${r.durationMs} ms</span>
+            <span>${esc(tm.unknown ? r.clientIp : tm.name + " · " + r.clientIp)}</span>
+            <details data-k="${esc(k)}" ${openDetails.has(k) ? "open" : ""}><summary>szczegóły</summary>
+              <div class="raw">${esc(r.method)} ${esc(r.path)}<br>status ${r.status} · ${r.durationMs} ms · ${esc(r.clientIp)}<br>${esc(r.time)}${r.error ? "<br>error: " + esc(r.error) : ""}</div>
+            </details>
+          </div>
+        </div>
+      </article>`;
     }
-    return best;
+    if (!shown.length) {
+      html = all.length
+        ? `<div class="card empty"><div class="big">🔍</div>Nic nie pasuje do filtrów.</div>`
+        : `<div class="card empty"><div class="big">🌤️</div>Jeszcze nikt nie pytał o pogodę.<br>Zapytania pojawią się tu same.</div>`;
+    }
+    $("feed").innerHTML = html;
+    $("more").hidden = rows.length <= limit;
+    $("feed").querySelectorAll("details").forEach(d => d.ontoggle = () => d.open ? openDetails.add(d.dataset.k) : openDetails.delete(d.dataset.k));
   }
 
-  document.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-    document.querySelectorAll(".chip").forEach(x => x.classList.remove("on"));
-    b.classList.add("on");
-    filter = b.dataset.f;
-    render();
-  });
-  document.getElementById("q").oninput = render;
-  document.getElementById("auto").onchange = e => document.getElementById("live").classList.toggle("paused", !e.target.checked);
-  setInterval(() => document.getElementById("auto").checked && load(), 3000);
+  function renderChips() {
+    const counts = {};
+    all.forEach(r => { const n = team(r.clientIp).name; counts[n] = (counts[n] || 0) + 1; });
+    const names = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    const chip = (label, val, n) => `<button class="chip ${teamFilter === val ? "on" : ""}" data-team="${esc(val ?? "")}">${label}${n != null ? ` <span class="n">${n}</span>` : ""}</button>`;
+    $("team-chips").innerHTML = chip("Wszyscy", null, all.length) + names.map(n => {
+      const t = Object.values(TEAMS).find(x => x.name === n) || { emoji: "👤" };
+      return chip(`${t.emoji} ${esc(n)}`, n, counts[n]);
+    }).join("");
+    $("team-chips").querySelectorAll(".chip").forEach(b => b.onclick = () => { teamFilter = b.dataset.team || null; limit = 60; render(); });
+    $("only-problems").classList.toggle("on", onlyProblems);
+  }
+
+  function renderSide() {
+    const n = all.length;
+    // Dostępność liczymy bez 4xx: błędne zapytanie klienta to nie awaria serwisu.
+    const ok = all.filter(r => r.status < 500).length;
+    const pct = n ? Math.round(ok / n * 100) : 100;
+    const color = pct >= 95 ? "var(--ok)" : pct >= 80 ? "var(--warn)" : "var(--err)";
+    const C = 2 * Math.PI * 40;
+    $("ring").innerHTML = `<svg width="96" height="96"><circle cx="48" cy="48" r="40" fill="none" stroke="var(--card-2)" stroke-width="10"/>
+      <circle cx="48" cy="48" r="40" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct / 100)}" style="transition: stroke-dashoffset .8s"/></svg>
+      <div class="v"><div>${n ? pct + "%" : "–"}<small>dostępności</small></div></div>`;
+
+    const times = all.map(r => r.durationMs).sort((a, b) => a - b);
+    const avg = n ? Math.round(times.reduce((a, b) => a + b, 0) / n) : 0;
+    const p95 = n ? times[Math.min(n - 1, Math.floor(n * 0.95))] : 0;
+    const lastErr = all.find(r => r.status >= 500);
+    const hour = all.filter(r => Date.now() - new Date(r.time) < 3600e3).length;
+    $("health").innerHTML = `
+      <div><span class="muted">Ostatnia godzina</span><span>${hour} zapytań</span></div>
+      <div><span class="muted">Odrzucone (4xx)</span><span>${all.filter(r => r.status >= 400 && r.status < 500).length}</span></div>
+      <div><span class="muted">Średni czas</span><span>${n ? avg + " ms" : "–"}</span></div>
+      <div><span class="muted">95% szybciej niż</span><span>${n ? p95 + " ms" : "–"}</span></div>
+      <div><span class="muted">Ostatnia awaria</span><span>${lastErr ? ago(lastErr.time) : "brak 🎉"}</span></div>`;
+
+    const byTeam = {};
+    all.forEach(r => { const t = team(r.clientIp); (byTeam[t.name] ||= { t, n: 0, last: r.time }).n++; });
+    const teams = Object.values(byTeam).sort((a, b) => b.n - a.n);
+    const max = Math.max(1, ...teams.map(x => x.n));
+    $("who").innerHTML = teams.length ? teams.map(({ t, n, last }) => `
+      <div class="who-row"><div class="avatar" style="background:${t.color}">${t.emoji}</div>
+        <div><b>${esc(t.name)}</b> <span class="muted" style="font-size:12px">· ${ago(last)}</span>
+          <div class="bar"><i style="width:${n / max * 100}%; background:${t.color}"></i></div></div>
+        <b>${n}</b></div>`).join("") : `<span class="muted">Na razie nikt.</span>`;
+
+    const byPlace = {};
+    all.filter(r => r.location).forEach(r => { (byPlace[r.location] ||= { n: 0, cat: (r.categories || [])[0] }).n++; });
+    const places = Object.entries(byPlace).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
+    $("places").innerHTML = places.length ? places.map(([name, v]) =>
+      `<div><span>${(WX[v.cat] || {}).icon || "📍"} ${esc(name)}</span><b>${v.n}×</b></div>`).join("") : `<span class="muted">Brak danych.</span>`;
+
+    const cats = {};
+    all.forEach(r => (r.categories || []).forEach(c => cats[c] = (cats[c] || 0) + 1));
+    const total = Object.values(cats).reduce((a, b) => a + b, 0);
+    $("stack").innerHTML = Object.keys(WX).filter(c => cats[c]).map(c =>
+      `<i title="${WX[c].label}" style="width:${cats[c] / total * 100}%; background:${WX[c].color}"></i>`).join("");
+    $("legend").innerHTML = total ? Object.keys(WX).filter(c => cats[c]).map(c =>
+      `<span>${WX[c].icon} ${WX[c].label} ${Math.round(cats[c] / total * 100)}%</span>`).join("") : "Brak prognoz.";
+  }
+
+  function renderHero() {
+    const h = new Date().getHours();
+    const hello = h < 5 ? "Dobranoc 🌙" : h < 12 ? "Dzień dobry ☕" : h < 18 ? "Cześć 👋" : "Dobry wieczór 🌆";
+    const recent = all.slice(0, 50).flatMap(r => r.categories || []);
+    const count = {};
+    recent.forEach(c => count[c] = (count[c] || 0) + 1);
+    const mood = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || "SUNNY";
+    $("sky").className = mood;
+
+    const hour = all.filter(r => Date.now() - new Date(r.time) < 3600e3);
+    const teams = new Set(hour.map(r => team(r.clientIp).name));
+    const fails = hour.filter(r => r.status >= 500).length;
+    $("greeting").textContent = hello;
+    $("summary").innerHTML = hour.length
+      ? `W ostatniej godzinie <b>${hour.length}</b> ${hour.length === 1 ? "zapytanie" : "zapytań"} od <b>${teams.size}</b> ${teams.size === 1 ? "klienta" : "klientów"}. `
+        + `W prognozach przeważa: <b>${WX[mood].icon} ${WX[mood].label.toLowerCase()}</b>. `
+        + (fails ? `<b>${fails}×</b> Open-Meteo nie odpowiedziało.` : "Wszystko działa jak należy ✨")
+      : "Cisza w eterze: w ostatniej godzinie nikt nie pytał o pogodę.";
+  }
+
+  // ---------- efekty pogody w nagłówku ----------
+  for (let i = 0; i < 60; i++) {
+    const d = document.createElement("i");
+    d.style.left = Math.random() * 100 + "%";
+    d.style.animationDuration = (0.5 + Math.random() * 0.5) + "s";
+    d.style.animationDelay = (Math.random() * 2) + "s";
+    $("rain").appendChild(d);
+  }
+  for (let i = 0; i < 40; i++) {
+    const d = document.createElement("i");
+    d.style.left = Math.random() * 100 + "%";
+    d.style.animationDuration = (3 + Math.random() * 4) + "s";
+    d.style.animationDelay = (Math.random() * 5) + "s";
+    d.style.transform = `scale(${0.5 + Math.random()})`;
+    $("snow").appendChild(d);
+  }
+
+  // ---------- zdarzenia ----------
+  $("q").oninput = () => { limit = 60; renderFeed(); };
+  $("only-problems").onclick = () => { onlyProblems = !onlyProblems; limit = 60; render(); };
+  $("more").onclick = () => { limit += 60; renderFeed(); };
+  $("live").onclick = () => {
+    paused = !paused;
+    $("live").classList.toggle("paused", paused);
+    $("live-txt").textContent = paused ? "wstrzymane" : "na żywo";
+    if (!paused) load();
+  };
+  setInterval(() => { if (!paused) load(); }, 3000);
   load();
 </script>
 </body>

@@ -61,10 +61,11 @@ public class RequestLogFilter extends OncePerRequestFilter {
         String location = body.location() == null ? null
                 : body.location().name() != null ? body.location().name()
                 : body.location().lat() + ", " + body.location().lon();
-        List<String> categories = body.days() == null ? List.of()
-                : body.days().stream().map(Day::category).toList();
+        List<Day> days = body.days() == null ? List.of() : body.days();
         return new RequestEntry(time, request.getMethod(), path(request), response.getStatus(), durationMs,
-                request.getRemoteAddr(), body.error(), location, categories);
+                request.getRemoteAddr(), body.error(), location,
+                days.stream().map(Day::category).toList(),
+                days.stream().map(d -> new RequestEntry.DaySummary(d.date(), d.category(), d.tempMin(), d.tempMax())).toList());
     }
 
     private static String path(HttpServletRequest request) {
@@ -102,6 +103,6 @@ public class RequestLogFilter extends OncePerRequestFilter {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Day(String category) {
+    record Day(java.time.LocalDate date, String category, double tempMin, double tempMax) {
     }
 }
