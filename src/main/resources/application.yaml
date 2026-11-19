@@ -4,4 +4,8 @@ spring:
 
 weather:
   # Wybiera implementację WeatherProvider
-  provider: open-meteo
+  provider: open-meteo   # open-meteo | fake
+  open-meteo:
+    geocoding-url: https://geocoding-api.open-meteo.com
+    forecast-url: https://api.open-meteo.com
+    timeout: 3s
