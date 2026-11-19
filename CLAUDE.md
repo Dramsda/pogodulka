@@ -4,9 +4,13 @@ Planer wycieczek składa się z 5 mikroserwisów robionych przez 5 zespołów. *
 
 ## źródła prawdy
 
-- `docs/kontrakt-pogoda.md` to kontrakt API uzgadniany z innymi zespołami. Punkty z **[JUTRO]** jeszcze są otwarte. Nie zgaduj ich, tylko zapytaj.
+- `docs/kontrakt-pogoda.md` to kontrakt API uzgodniony z innymi zespołami. **Kontrakt jest zamrożony** (serwis działa na produkcji, inne zespoły się do niego podpięły):
+  - nie zmieniamy ścieżek, parametrów, pól JSON, kodów odpowiedzi ani granic dat w `/api/weather/**`,
+  - nowe funkcje (np. panel admina) dodajemy poza `/api/weather/**` i bez wpływu na odpowiedzi kontraktowe,
+  - edycja pliku kontraktu wymaga zgody użytkownika (reguła `ask` w `.claude/settings.json`); `ContractTest` pilnuje zachowania.
 - `README.md` opisuje API tak, jak jest naprawdę zaimplementowane: każdy endpoint i każdy kod odpowiedzi. Aktualizujemy go w tym samym commicie co endpoint.
-- Kontrakt i README muszą być zgodne. Jeśli implementacja odbiega od kontraktu, poprawiamy kod albo świadomie zmieniamy kontrakt i dajemy znać zespołowi Atrakcje.
+- Kontrakt i README muszą być zgodne. Jeśli implementacja odbiega od kontraktu, poprawiamy kod, nie kontrakt.
+- Wdrożenie na `172.20.147.21:8082` tylko przez `deploy.sh`: buduje nowy obraz, zanim zatrzyma stary kontener, więc przerwa trwa kilka sekund, a czerwone testy przerywają deploy.
 
 ## stack (ustalony)
 
@@ -53,6 +57,7 @@ record DailyWeather(LocalDate date, double tempMin, double tempMax,
 - Wybór implementacji przez property `weather.provider` (`open-meteo` | `fake`) i `@ConditionalOnProperty` na każdej klasie.
 - Kategorię (`SUNNY`, `CLOUDY`, `RAIN`, `SNOW`, `STORM`) wylicza `WeatherService` z kodu WMO. To czysta funkcja z własnym testem JUnit.
 - `FakeWeatherProvider` ma zarezerwowane miasta: `Atlantyda` (brak miasta → 404) i `Awaria` (rzuca `ProviderUnavailableException` → 503).
+- Panel admina (pakiet `admin`, `/admin/**`): `RequestLogFilter` zapisuje requesty do `/api/**` w `RequestLog` (pamięć + plik JSONL), `AdminAuthFilter` wymaga HTTP Basic. Panel nie może zmieniać odpowiedzi kontraktowych, a błąd zapisu logu tylko logujemy. Testy: `AdminPanelTest`, `AdminPanelDisabledTest`.
 - Wyjątki zgodnie ze skillem. Każdy nowy kod statusu dostaje własny wyjątek:
   - `BadRequestException` → 400,
   - `NotFoundException` → 404,

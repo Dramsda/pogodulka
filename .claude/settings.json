@@ -16,7 +16,8 @@
       "Bash(git log:*)"
     ],
     "ask": [
-      "Edit(/src/test/**)"
+      "Edit(/src/test/**)",
+      "Edit(/docs/kontrakt-pogoda.md)"
     ]
   },
   "extraKnownMarketplaces": {
