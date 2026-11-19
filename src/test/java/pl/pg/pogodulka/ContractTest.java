@@ -67,7 +67,7 @@ class ContractTest {
 
     @Test
     void getDay_lastForecastDay() {
-        assertThat(mockMvc.get().uri("/api/weather/day?city=Kraków&date={date}", today().plusDays(15)))
+        assertThat(mockMvc.get().uri("/api/weather/day?city=Kraków&date={date}", today().plusDays(14)))
                 .hasStatusOk();
     }
 
@@ -102,11 +102,11 @@ class ContractTest {
 
     @Test
     void getRange_maxLength() {
-        assertThat(mockMvc.get().uri("/api/weather/range?city=Kraków&from={from}&to={to}", today(), today().plusDays(15)))
+        assertThat(mockMvc.get().uri("/api/weather/range?city=Kraków&from={from}&to={to}", today(), today().plusDays(14)))
                 .hasStatusOk()
                 .bodyJson()
-                .hasPath("$.days[15]")
-                .doesNotHavePath("$.days[16]");
+                .hasPath("$.days[14]")
+                .doesNotHavePath("$.days[15]");
     }
 
     // --- 400 ---
@@ -168,7 +168,7 @@ class ContractTest {
 
     @Test
     void getDay_dateTooFar() {
-        assertBadRequest("/api/weather/day?city=Kraków&date=" + today().plusDays(16));
+        assertBadRequest("/api/weather/day?city=Kraków&date=" + today().plusDays(15));
     }
 
     @Test
@@ -183,7 +183,7 @@ class ContractTest {
 
     @Test
     void getRange_toTooFar() {
-        assertBadRequest("/api/weather/range?city=Kraków&from=" + tomorrow() + "&to=" + today().plusDays(16));
+        assertBadRequest("/api/weather/range?city=Kraków&from=" + tomorrow() + "&to=" + today().plusDays(15));
     }
 
     @Test

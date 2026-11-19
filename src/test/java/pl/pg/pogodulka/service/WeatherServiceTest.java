@@ -62,7 +62,7 @@ class WeatherServiceTest {
 
     @Test
     void validateDates_todayToLastDay() {
-        assertThatCode(() -> WeatherService.validateDates(TODAY, TODAY.plusDays(15), TODAY))
+        assertThatCode(() -> WeatherService.validateDates(TODAY, TODAY.plusDays(14), TODAY))
                 .doesNotThrowAnyException();
     }
 
@@ -80,7 +80,7 @@ class WeatherServiceTest {
 
     @Test
     void validateDates_beyondForecast() {
-        assertThatThrownBy(() -> WeatherService.validateDates(TODAY, TODAY.plusDays(16), TODAY))
+        assertThatThrownBy(() -> WeatherService.validateDates(TODAY, TODAY.plusDays(15), TODAY))
                 .isInstanceOf(BadRequestException.class);
     }
 }

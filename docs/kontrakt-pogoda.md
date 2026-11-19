@@ -28,9 +28,9 @@ GET /api/weather/range?lat=50.0614&lon=19.9366&from=2026-11-20&to=2026-11-22
 | `from`, `to` | tak (`/range`) | `YYYY-MM-DD` | pierwszy i ostatni dzień (włącznie) |
 
 Zakres dat:
-- każda data musi mieścić się w przedziale **od dziś do dziś + 15 dni** (tyle obejmuje prognoza),
+- każda data musi mieścić się w przedziale **od dziś do dziś + 14 dni** (dla dziś+15 Open-Meteo nie ma już pełnych danych),
 - daty z przeszłości dają `400`,
-- zakres `/range` ma więc najwyżej 16 dni.
+- zakres `/range` ma więc najwyżej 15 dni.
 
 Nie ustaliliśmy jeszcze:
 - **[JUTRO]** port i adres bazowy (do uzgodnienia z pozostałymi zespołami).
@@ -71,7 +71,7 @@ Błędy mają postać `{ "error": "<opis>" }`:
 
 | kod | kiedy |
 |---|---|
-| `400 Bad Request` | brak `city` i `lat`/`lon`, podane jednocześnie `city` i `lat`/`lon`, `lat`/`lon` poza zakresem, zły format daty, data poza przedziałem dziś…dziś+15, `from > to` |
+| `400 Bad Request` | brak `city` i `lat`/`lon`, podane jednocześnie `city` i `lat`/`lon`, `lat`/`lon` poza zakresem, zły format daty, data poza przedziałem dziś…dziś+14, `from > to` |
 | `404 Not Found` | nie znaleziono miasta |
 | `503 Service Unavailable` | zewnętrzne API nie odpowiada albo zwraca błąd. Dochodzi nagłówek `Retry-After: 60` |
 

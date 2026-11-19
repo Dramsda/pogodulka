@@ -31,7 +31,7 @@ docker build -t weather-service .
 
 Pełny kontrakt uzgodniony z innymi zespołami jest w `docs/kontrakt-pogoda.md`. Tę sekcję uzupełniamy na bieżąco, gdy powstają kolejne endpointy.
 
-Lokalizacja: `city` **albo** `lat`+`lon` (nie oba naraz). Daty `YYYY-MM-DD`, każda w przedziale od dziś do dziś + 15 dni.
+Lokalizacja: `city` **albo** `lat`+`lon` (nie oba naraz). Daty `YYYY-MM-DD`, każda w przedziale od dziś do dziś + 14 dni.
 
 ### GET /api/weather/day
 
@@ -64,7 +64,7 @@ GET /api/weather/range?city=Kraków&from=2026-11-20&to=2026-11-22
 GET /api/weather/range?lat=50.0614&lon=19.9366&from=2026-11-20&to=2026-11-22
 ```
 
-`200 OK`, ten sam kształt co `/day`. `days` zawiera po jednym elemencie na każdy dzień od `from` do `to` włącznie, rosnąco (najwyżej 16).
+`200 OK`, ten sam kształt co `/day`. `days` zawiera po jednym elemencie na każdy dzień od `from` do `to` włącznie, rosnąco (najwyżej 15).
 
 ### błędy
 
@@ -72,7 +72,7 @@ Treść zawsze `{"error": "<opis>"}`.
 
 | kod | kiedy |
 |---|---|
-| `400` | brak `city` i `lat`/`lon`; `city` razem z `lat`/`lon`; tylko `lat` albo tylko `lon`; `lat` poza -90…90, `lon` poza -180…180; `lat`/`lon` nie jest liczbą; brak daty; zły format daty; data przed dziś albo po dziś + 15; `from > to` |
+| `400` | brak `city` i `lat`/`lon`; `city` razem z `lat`/`lon`; tylko `lat` albo tylko `lon`; `lat` poza -90…90, `lon` poza -180…180; `lat`/`lon` nie jest liczbą; brak daty; zły format daty; data przed dziś albo po dziś + 14; `from > to` |
 | `404` | Open-Meteo nie zna miasta (`{"error": "City <nazwa> not found"}`) |
 | `503` | Open-Meteo nie odpowiada w 3 s albo zwraca błąd; nagłówek `Retry-After: 60` |
 

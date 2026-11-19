@@ -19,8 +19,8 @@ import pl.pg.pogodulka.model.WeatherProvider;
 @RequiredArgsConstructor
 public class WeatherService {
 
-    /** Prognoza obejmuje dziś i kolejne 15 dni. */
-    static final int MAX_DAYS_AHEAD = 15;
+    /** Dziś i kolejne 14 dni. Open-Meteo dla 16. dnia (dziś+15) zwraca niepełne dane (null). */
+    static final int MAX_DAYS_AHEAD = 14;
 
     private final WeatherProvider provider;
 
