@@ -21,11 +21,18 @@ windows:
 .\mvnw.cmd spring-boot:run
 ```
 
-docker:
+docker (nie trzeba mieć Javy ani Mavena, wystarczy Docker):
 
 ```bash
 docker build -t weather-service .
+docker run --rm -p 8080:8080 weather-service
 ```
+
+- Build kompiluje kod i uruchamia testy. Czerwone testy przerywają build.
+- Dane udawane, bez internetu: `docker run --rm -p 8080:8080 -e WEATHER_PROVIDER=fake weather-service`.
+- Inny port: `-p 8081:8080` po stronie hosta albo `-e SERVER_PORT=8081 -p 8081:8081`.
+- Kontener liczy „dziś” w strefie `Europe/Warsaw`.
+- Stan serwisu: `GET /actuator/health`.
 
 ## API
 
