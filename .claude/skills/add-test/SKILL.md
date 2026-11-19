@@ -23,9 +23,8 @@ Przy nowej regule z kontraktu najpierw napisz test na podstawie `docs/kontrakt-p
 ## szablon testu kontraktu
 
 ```java
-@SpringBootTest
+@SpringBootTest(properties = "weather.provider=fake")
 @AutoConfigureMockMvc
-@Transactional
 class ContractTest {
 
     @Autowired
@@ -59,8 +58,7 @@ Zasady:
 - Nazwy testów: `metoda_scenariusz` (`getRange_fromAfterTo`), a dla ścieżki szczęśliwej sama nazwa metody (`getDay`).
 - **Zawsze sprawdzaj status i JSON.** `isLenientlyEqualTo` pozwala pominąć pola zmienne (temperatura z generatora, `fetchedAt`), ale klucze z kontraktu muszą być w asercji. Inaczej zmiana nazwy pola przejdzie niezauważona.
 - Daty liczymy względnie od dziś (`tomorrow()`), nigdy nie wpisujemy ich na sztywno, bo test zestarzeje się jutro.
-- Dane przygotowujemy przez API (helper na dole klasy). Nigdy przez repozytorium.
-- Bez Mockito, `@MockBean` i `@WebMvcTest`. Zewnętrzne API zastępuje generator danych (`weather.provider=fake`) z zarezerwowanymi miastami `Atlantyda` (404) i `Awaria` (503).
+- Bez Mockito, `@MockBean` i `@WebMvcTest`. Zewnętrzne API zastępuje `FakeWeatherProvider` (`@SpringBootTest(properties = "weather.provider=fake")`). Dane są deterministyczne: ta sama lokalizacja i data dają tę samą pogodę. Zarezerwowane miasta: `Atlantyda` (404) i `Awaria` (503).
 
 ## szablon testu czystej funkcji
 
