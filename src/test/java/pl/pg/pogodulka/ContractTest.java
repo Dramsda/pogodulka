@@ -142,6 +142,16 @@ class ContractTest {
     }
 
     @Test
+    void getDay_latNaN() {
+        assertBadRequest("/api/weather/day?lat=NaN&lon=19.9366&date=" + tomorrow());
+    }
+
+    @Test
+    void getDay_lonNaN() {
+        assertBadRequest("/api/weather/day?lat=50.0614&lon=NaN&date=" + tomorrow());
+    }
+
+    @Test
     void getDay_missingDate() {
         assertBadRequest("/api/weather/day?city=Kraków");
     }

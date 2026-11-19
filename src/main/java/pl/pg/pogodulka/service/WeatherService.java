@@ -64,10 +64,11 @@ public class WeatherService {
         if (lat == null || lon == null) {
             throw new BadRequestException("Provide 'city' or both 'lat' and 'lon'");
         }
-        if (lat < -90 || lat > 90) {
+        // Zapis przez negację, bo NaN nie spełnia żadnego porównania i inaczej przechodzi walidację.
+        if (!(lat >= -90 && lat <= 90)) {
             throw new BadRequestException("'lat' must be between -90 and 90");
         }
-        if (lon < -180 || lon > 180) {
+        if (!(lon >= -180 && lon <= 180)) {
             throw new BadRequestException("'lon' must be between -180 and 180");
         }
         return new Location(null, lat, lon);
