@@ -5,8 +5,8 @@ Serwis pogodowy planera wycieczek. Zwraca prognozę dla miasta albo współrzęd
 ## stack
 
 - java 25
-- spring boot 4.1.2 (web mvc, data jpa, validation, restclient, actuator)
-- postgresql (compose.yaml), h2 w testach
+- spring boot 4.1.2 (web mvc, validation, restclient, actuator)
+- bez bazy danych
 - maven wrapper
 
 ## build and run
@@ -45,4 +45,4 @@ todo
 
 ## notes
 
-- gdy zewnętrzne API nie odpowiada, oddajemy dane z bazy z `"stale": true`. Gdy w bazie nic nie ma, zwracamy `503` z `Retry-After: 60`. Dzięki temu awaria dostawcy nie blokuje planowania wycieczki.
+- dane pobieramy na bieżąco z Open-Meteo, bez bazy. Gdy API nie odpowiada, zwracamy `503` z `Retry-After: 60`. Pole `stale` jest zawsze `false`.
