@@ -11,31 +11,48 @@ Planer wycieczek składa się z 5 mikroserwisów robionych przez 5 zespołów. *
 ## stack (ustalony)
 
 - Java 25, Spring Boot 4.1.2, Maven z wrapperem (`mvnw`). Maven nie jest zainstalowany globalnie.
-- Spring Web MVC, Validation, Data JPA, RestClient (`spring-boot-starter-restclient`), Actuator, Lombok.
-- PostgreSQL to baza docelowa, uruchamiana z `compose.yaml` (`spring-boot-docker-compose` stawia ją sam przy `mvnw spring-boot:run`).
+- Spring Web MVC, Validation, RestClient (`spring-boot-starter-restclient`), Actuator, Lombok.
+- Serwis nie używa bazy danych.
 - Dockerfile pozwala innym zespołom uruchomić nasz serwis bez budowania.
-- Konwencje kodu opisuje skill `java-spring-style`. Nie dotyczą nas jego części o pessimistic lock i relacjach `@ManyToOne`: mamy jedną główną encję i brak relacji.
+- Konwencje kodu opisuje skill `java-spring-style`. Nie dotyczą nas jego części o JPA, pessimistic lock i relacjach `@ManyToOne`: nie mamy bazy danych.
 
 ## stack (propozycje do potwierdzenia)
 
-- Testy na H2 w trybie PostgreSQL (`h2` w scope `test`) z `@Transactional` rollback, zgodnie ze skillem. Alternatywa to Testcontainers, ale na zajęciach wymaga działającego Dockera.
-- Schemat tworzony przez `spring.jpa.hibernate.ddl-auto=update`. Na 3 godziny nie potrzebujemy Flyway.
+- Brak propozycji do potwierdzenia.
 
 ## architektura serwisu
 
 ```
 GET /api/weather/day | /api/weather/range
         │
-   WeatherController ──► WeatherService
-                              │ 1. WeatherProvider (zewnętrzne API albo generator danych)
-                              │ 2. udało się → zapis/aktualizacja w bazie → 200, stale=false
-                              │ 3. błąd/timeout → dane z bazy → 200, stale=true
-                              │ 4. w bazie też nic → 503 + Retry-After: 60
-                         WeatherRepository (PostgreSQL)
+   WeatherController      parametry HTTP, 400 przy złym formacie
+        │
+   WeatherService         walidacja dat, city albo lat/lon → Location,
+        │                 kategoria pogody, budowa WeatherResponse
+        ▼
+   WeatherProvider        ← interfejs, WeatherService zna tylko jego
+      ├── OpenMeteoProvider   RestClient, JSON Open-Meteo → nasz model
+      └── FakeWeatherProvider dane udawane (testy, demo)
 ```
 
-- `WeatherProvider` to interfejs, bo będą co najmniej dwie implementacje: zewnętrzne API (którego, ustalamy **[JUTRO]**) i generator danych udawanych. Wybór implementacji przez property `weather.provider`.
-- Dane można też dopisać ręcznie przez endpoint zapisu (propozycja: `POST /api/weather`). To endpoint wewnętrzny, poza kontraktem z Atrakcjami.
+Granica między serwisem a źródłem danych (pakiet `model`):
+
+```java
+public interface WeatherProvider {
+    Optional<Location> findCity(String name);                                      // empty → 404
+    List<DailyWeather> getDaily(Location location, LocalDate from, LocalDate to); // awaria → ProviderUnavailableException
+}
+
+record Location(String name, double lat, double lon) {}
+record DailyWeather(LocalDate date, double tempMin, double tempMax,
+                    double precipitationMm, double windKph, int weatherCode) {} // weatherCode: kod WMO
+```
+
+- `WeatherProvider` zwraca **nasz** model, nigdy JSON zewnętrznego API ani DTO odpowiedzi. Szczegóły źródła (URL, format, mapowanie) zostają w implementacji.
+- Nowe źródło danych (np. baza z repository) to nowa implementacja `WeatherProvider`. `WeatherService` się nie zmienia.
+- Wybór implementacji przez property `weather.provider` (`open-meteo` | `fake`) i `@ConditionalOnProperty` na każdej klasie.
+- Kategorię (`SUNNY`, `CLOUDY`, `RAIN`, `SNOW`, `STORM`) wylicza `WeatherService` z kodu WMO. To czysta funkcja z własnym testem JUnit.
+- `FakeWeatherProvider` ma zarezerwowane miasta: `Atlantyda` (brak miasta → 404) i `Awaria` (rzuca `ProviderUnavailableException` → 503).
 - Wyjątki zgodnie ze skillem. Każdy nowy kod statusu dostaje własny wyjątek:
   - `BadRequestException` → 400,
   - `NotFoundException` → 404,
@@ -45,7 +62,7 @@ GET /api/weather/day | /api/weather/range
 ## komendy
 
 ```bash
-./mvnw spring-boot:run          # start + postgres z compose.yaml
+./mvnw spring-boot:run          # start serwisu
 ./mvnw test                     # testy
 docker build -t weather-service .
 ```
@@ -54,7 +71,7 @@ Windows (PowerShell): `.\mvnw.cmd spring-boot:run`, `.\mvnw.cmd test`.
 
 ## zasady pracy na hackatonie
 
-- Najpierw ma działać `GET /api/weather/day` z danymi z generatora. Prawdziwe API i fallback na bazę dokładamy potem. Działający kontrakt jest ważniejszy niż kompletność.
+- Najpierw ma działać `GET /api/weather/day` z danymi z generatora. Prawdziwe API (Open-Meteo) dokładamy potem. Działający kontrakt jest ważniejszy niż kompletność.
 - Commity małe, w stylu ze skilla (`add weather entity and repository`).
 - Przed oddaniem uruchom skill `smoke-test` i porównaj odpowiedzi z `docs/kontrakt-pogoda.md`.
 
@@ -71,4 +88,4 @@ Cały kod pisze AI, więc testy są specyfikacją. Kod dopasowujemy do testów, 
 
 ## pluginy (opcjonalne)
 
-`.claude/settings.json` rejestruje marketplace `ponytail` z GitHuba (`DietrichGebert/ponytail`), ale niczego nie włącza na siłę. Kto chce tryb „najprostsze rozwiązanie”, instaluje go poleceniem `claude plugin install ponytail@ponytail`. Pamiętaj, że ponytail lubi wycinać abstrakcje. Interfejs `WeatherProvider` i fallback na bazę zostają, bo są częścią ustaleń.
+`.claude/settings.json` rejestruje marketplace `ponytail` z GitHuba (`DietrichGebert/ponytail`), ale niczego nie włącza na siłę. Kto chce tryb „najprostsze rozwiązanie”, instaluje go poleceniem `claude plugin install ponytail@ponytail`. Pamiętaj, że ponytail lubi wycinać abstrakcje. Interfejs `WeatherProvider` zostaje, bo jest częścią ustaleń.

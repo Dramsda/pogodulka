@@ -1,8 +1,8 @@
 # Pogoda
 
-> Wersja robocza. Punkty oznaczone **[JUTRO]** ustalamy na hackatonie.
+> Punkty oznaczone **[JUTRO]** są jeszcze otwarte.
 
-**Dostawca:** zespół Pogoda (weather-service). Dane pobieramy z zewnętrznego API pogodowego (którego, **[JUTRO]**) i zapisujemy w naszej bazie. Dane w bazie możemy też dodawać ręcznie lub generować.
+**Dostawca:** zespół Pogoda (weather-service). Dane pobieramy na bieżąco z zewnętrznego API [Open-Meteo](https://open-meteo.com) (prognoza i geokodowanie). Nie przechowujemy ich u siebie.
 
 **Klient:** zespół Atrakcje (attractions-service). Pyta o pogodę dla miejsca i dnia albo zakresu dni wycieczki, żeby zdecydować, które atrakcje są dostępne.
 
@@ -22,54 +22,65 @@ GET /api/weather/range?lat=50.0614&lon=19.9366&from=2026-11-20&to=2026-11-22
 
 | parametr | wymagany | format | opis |
 |---|---|---|---|
-| `city` | `city` albo `lat`+`lon` | tekst, w URL zakodowany (`Krak%C3%B3w`) | nazwa miasta |
-| `lat`, `lon` | `city` albo `lat`+`lon` | liczba dziesiętna | współrzędne |
+| `city` | `city` albo `lat`+`lon` (nie oba) | tekst, w URL zakodowany (`Krak%C3%B3w`) | nazwa miasta |
+| `lat`, `lon` | `city` albo `lat`+`lon` (nie oba) | liczba dziesiętna, `lat` od -90 do 90, `lon` od -180 do 180 | współrzędne |
 | `date` | tak (`/day`) | `YYYY-MM-DD` | dzień |
 | `from`, `to` | tak (`/range`) | `YYYY-MM-DD` | pierwszy i ostatni dzień (włącznie) |
 
+Zakres dat:
+- każda data musi mieścić się w przedziale **od dziś do dziś + 15 dni** (tyle obejmuje prognoza),
+- daty z przeszłości dają `400`,
+- zakres `/range` ma więc najwyżej 16 dni.
+
 Nie ustaliliśmy jeszcze:
-- **[JUTRO]** port i adres bazowy (do uzgodnienia z pozostałymi zespołami),
-- **[JUTRO]** maksymalna długość zakresu,
-- **[JUTRO]** czy można pytać o daty z przeszłości.
+- **[JUTRO]** port i adres bazowy (do uzgodnienia z pozostałymi zespołami).
 
 **Wzór odpowiedzi:**
 
-**[JUTRO]** Pola dla każdego dnia jeszcze nie są ustalone. Do wyboru mamy:
-- same surowe dane,
-- dane i kategorię pogody (np. `RAIN`),
-- dane, kategorię i podpowiedź `outdoorFriendly`.
+`200 OK`, JSON. `/day` i `/range` mają ten sam kształt. `/day` zwraca listę `days` z jednym elementem.
 
-Już wiadomo, że:
-- odpowiedź to `200 OK` w formacie JSON,
-- `/range` zwraca listę dni,
-- każda odpowiedź ma flagę `stale` (`true`, gdy dane pochodzą z bazy, bo zewnętrzne API nie odpowiedziało).
-
-Szkic do dyskusji:
 ```json
 {
   "location": { "name": "Kraków", "lat": 50.0614, "lon": 19.9366 },
   "days": [
-    { "date": "2026-11-20", "...": "pola do ustalenia" }
+    {
+      "date": "2026-11-20",
+      "tempMin": 2.1,
+      "tempMax": 7.4,
+      "precipitationMm": 3.2,
+      "windKph": 18.0,
+      "category": "RAIN"
+    }
   ],
   "stale": false
 }
 ```
 
+| pole | typ | opis |
+|---|---|---|
+| `location.name` | tekst albo `null` | nazwa miasta; `null`, gdy pytano po `lat`/`lon` |
+| `location.lat`, `location.lon` | liczba | współrzędne, dla których liczona jest prognoza |
+| `days[].date` | `YYYY-MM-DD` | dzień, dni posortowane rosnąco |
+| `days[].tempMin`, `days[].tempMax` | liczba, °C | minimalna i maksymalna temperatura dnia |
+| `days[].precipitationMm` | liczba, mm | suma opadów w ciągu dnia |
+| `days[].windKph` | liczba, km/h | maksymalna prędkość wiatru |
+| `days[].category` | `SUNNY` \| `CLOUDY` \| `RAIN` \| `SNOW` \| `STORM` | ogólna kategoria pogody dnia |
+| `stale` | bool | obecnie zawsze `false`. Pole zostaje, żeby można było dołożyć cache albo bazę bez zmiany kontraktu |
+
 Błędy mają postać `{ "error": "<opis>" }`:
 
 | kod | kiedy |
 |---|---|
-| `400 Bad Request` | brak `city` i `lat`/`lon`, zły format daty, `from > to` |
+| `400 Bad Request` | brak `city` i `lat`/`lon`, podane jednocześnie `city` i `lat`/`lon`, `lat`/`lon` poza zakresem, zły format daty, data poza przedziałem dziś…dziś+15, `from > to` |
 | `404 Not Found` | nie znaleziono miasta |
-| `503 Service Unavailable` | zewnętrzne API nie odpowiada i w bazie nie ma danych. Dochodzi nagłówek `Retry-After: 60` |
+| `503 Service Unavailable` | zewnętrzne API nie odpowiada albo zwraca błąd. Dochodzi nagłówek `Retry-After: 60` |
 
 **Limit oczekiwania na odpowiedź:** **[JUTRO]**
 
 **Zachowanie przy błędzie i niedostępności usługi:**
 
 Po naszej stronie (dostawca):
-1. Zewnętrzne API nie odpowiada, a w bazie są dane dla tego miejsca i dnia: zwracamy `200` z danymi z bazy i `"stale": true`.
-2. Zewnętrzne API nie odpowiada i w bazie nic nie ma: zwracamy `503` z nagłówkiem `Retry-After: 60` i treścią `{"error": "..."}`.
-3. Klient wysłał błędne parametry: od razu `400`, bez wywoływania zewnętrznego API.
+1. Klient wysłał błędne parametry: od razu `400`, bez wywoływania zewnętrznego API.
+2. Zewnętrzne API nie odpowiada: `503` z nagłówkiem `Retry-After: 60` i treścią `{"error": "..."}`. Nie mamy danych zapasowych.
 
 Po stronie klienta (Atrakcje), gdy nasz serwis nie odpowie: **[JUTRO]**
