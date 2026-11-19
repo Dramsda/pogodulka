@@ -73,6 +73,7 @@ Windows (PowerShell): `.\mvnw.cmd spring-boot:run`, `.\mvnw.cmd test`.
 
 - Najpierw ma działać `GET /api/weather/day` z danymi z generatora. Prawdziwe API (Open-Meteo) dokładamy potem. Działający kontrakt jest ważniejszy niż kompletność.
 - Commity małe, w stylu ze skilla (`add weather entity and repository`).
+- Nad repo pracuje kilka osób: przed każdym `git push` najpierw `git pull --rebase`, potem `mvnw test`, dopiero wtedy push. Konflikt przy rebase rozwiązujemy z użytkownikiem, nie na ślepo.
 - Przed oddaniem uruchom skill `smoke-test` i porównaj odpowiedzi z `docs/kontrakt-pogoda.md`.
 
 ## testy (ochrona przed regresjami)
